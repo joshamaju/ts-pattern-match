@@ -24,9 +24,9 @@ const isNonEmptyString: Predicate.Refinement<string, NonEmptyString> = (
 describe("Predicate", () => {
   it("compose", () => {
     const refinement = pipe(isString, Predicate.compose(isNonEmptyString));
-    assertTrue(refinement("a"));
-    assertFalse(refinement(null));
-    assertFalse(refinement(""));
+    expect(refinement("a")).toBeTruthy();
+    expect(refinement(null)).toBeFalsy();
+    expect(refinement("")).toBeFalsy();
   });
 
   it("mapInput", () => {
@@ -37,312 +37,348 @@ describe("Predicate", () => {
       isPositive,
       Predicate.mapInput((a: A) => a.a),
     );
-    assertFalse(predicate({ a: -1 }));
-    assertFalse(predicate({ a: 0 }));
-    assertTrue(predicate({ a: 1 }));
+    expect(predicate({ a: -1 })).toBeFalsy();
+    expect(predicate({ a: 0 })).toBeFalsy();
+    expect(predicate({ a: 1 })).toBeTruthy();
   });
 
   it("product", () => {
     const product = Predicate.product;
     const p = product(isPositive, isNegative);
-    assertTrue(p([1, -1]));
-    assertFalse(p([1, 1]));
-    assertFalse(p([-1, -1]));
-    assertFalse(p([-1, 1]));
+    expect(p([1, -1])).toBeTruthy();
+    expect(p([1, 1])).toBeFalsy();
+    expect(p([-1, -1])).toBeFalsy();
+    expect(p([-1, 1])).toBeFalsy();
   });
 
   it("productMany", () => {
     const productMany = Predicate.productMany;
     const p = productMany(isPositive, [isNegative]);
-    assertTrue(p([1, -1]));
-    assertFalse(p([1, 1]));
-    assertFalse(p([-1, -1]));
-    assertFalse(p([-1, 1]));
+    expect(p([1, -1])).toBeTruthy();
+    expect(p([1, 1])).toBeFalsy();
+    expect(p([-1, -1])).toBeFalsy();
+    expect(p([-1, 1])).toBeFalsy();
   });
 
   it("tuple", () => {
     const p = Predicate.tuple(isPositive, isNegative);
-    assertTrue(p([1, -1]));
-    assertFalse(p([1, 1]));
-    assertFalse(p([-1, -1]));
-    assertFalse(p([-1, 1]));
+    expect(p([1, -1])).toBeTruthy();
+    expect(p([1, 1])).toBeFalsy();
+    expect(p([-1, -1])).toBeFalsy();
+    expect(p([-1, 1])).toBeFalsy();
   });
 
   it("struct", () => {
     const p = Predicate.struct({ a: isPositive, b: isNegative });
-    assertTrue(p({ a: 1, b: -1 }));
-    assertFalse(p({ a: 1, b: 1 }));
-    assertFalse(p({ a: -1, b: -1 }));
-    assertFalse(p({ a: -1, b: 1 }));
+    expect(p({ a: 1, b: -1 })).toBeTruthy();
+    expect(p({ a: 1, b: 1 })).toBeFalsy();
+    expect(p({ a: -1, b: -1 })).toBeFalsy();
+    expect(p({ a: -1, b: 1 })).toBeFalsy();
   });
 
   it("all", () => {
     const p = Predicate.all([isPositive, isNegative]);
-    assertTrue(p([1]));
-    assertTrue(p([1, -1]));
-    assertFalse(p([1, 1]));
-    assertFalse(p([-1, -1]));
-    assertFalse(p([-1, 1]));
+    expect(p([1])).toBeTruthy();
+    expect(p([1, -1])).toBeTruthy();
+    expect(p([1, 1])).toBeFalsy();
+    expect(p([-1, -1])).toBeFalsy();
+    expect(p([-1, 1])).toBeFalsy();
   });
 
   it("not", () => {
     const p = Predicate.not(isPositive);
-    assertFalse(p(1));
-    assertTrue(p(0));
-    assertTrue(p(-1));
+    expect(p(1)).toBeFalsy();
+    expect(p(0)).toBeTruthy();
+    expect(p(-1)).toBeTruthy();
   });
 
   it("or", () => {
     const p = pipe(isPositive, Predicate.or(isNegative));
-    assertTrue(p(-1));
-    assertTrue(p(1));
-    assertFalse(p(0));
+    expect(p(-1)).toBeTruthy();
+    expect(p(1)).toBeTruthy();
+    expect(p(0)).toBeFalsy();
   });
 
   it("and", () => {
     const p = pipe(isPositive, Predicate.and(isLessThan2));
-    assertTrue(p(1));
-    assertFalse(p(-1));
-    assertFalse(p(3));
+    expect(p(1)).toBeTruthy();
+    expect(p(-1)).toBeFalsy();
+    expect(p(3)).toBeFalsy();
   });
 
   it("xor", () => {
-    assertFalse(pipe(Fun.constTrue, Predicate.xor(Fun.constTrue))(null)); // true xor true = false
-    assertTrue(pipe(Fun.constTrue, Predicate.xor(Fun.constFalse))(null)); // true xor false = true
-    assertTrue(pipe(Fun.constFalse, Predicate.xor(Fun.constTrue))(null)); // false xor true = true
-    assertFalse(pipe(Fun.constFalse, Predicate.xor(Fun.constFalse))(null)); // false xor false = false
+    expect(pipe(Fun.constTrue, Predicate.xor(Fun.constTrue))(null)).toBeFalsy(); // true xor true = false
+    expect(
+      pipe(Fun.constTrue, Predicate.xor(Fun.constFalse))(null),
+    ).toBeTruthy(); // true xor false = true
+    expect(
+      pipe(Fun.constFalse, Predicate.xor(Fun.constTrue))(null),
+    ).toBeTruthy(); // false xor true = true
+    expect(
+      pipe(Fun.constFalse, Predicate.xor(Fun.constFalse))(null),
+    ).toBeFalsy(); // false xor false = false
   });
 
   it("eqv", () => {
-    assertTrue(pipe(Fun.constTrue, Predicate.eqv(Fun.constTrue))(null)); // true eqv true = true
-    assertFalse(pipe(Fun.constTrue, Predicate.eqv(Fun.constFalse))(null)); // true eqv false = false
-    assertFalse(pipe(Fun.constFalse, Predicate.eqv(Fun.constTrue))(null)); // false eqv true = false
-    assertTrue(pipe(Fun.constFalse, Predicate.eqv(Fun.constFalse))(null)); // false eqv false = true
+    expect(
+      pipe(Fun.constTrue, Predicate.eqv(Fun.constTrue))(null),
+    ).toBeTruthy(); // true eqv true = true
+    expect(
+      pipe(Fun.constTrue, Predicate.eqv(Fun.constFalse))(null),
+    ).toBeFalsy(); // true eqv false = false
+    expect(
+      pipe(Fun.constFalse, Predicate.eqv(Fun.constTrue))(null),
+    ).toBeFalsy(); // false eqv true = false
+    expect(
+      pipe(Fun.constFalse, Predicate.eqv(Fun.constFalse))(null),
+    ).toBeTruthy(); // false eqv false = true
   });
 
   it("implies", () => {
-    assertTrue(pipe(Fun.constTrue, Predicate.implies(Fun.constTrue))(null)); // true implies true = true
-    assertFalse(pipe(Fun.constTrue, Predicate.implies(Fun.constFalse))(null)); // true implies false = false
-    assertTrue(pipe(Fun.constFalse, Predicate.implies(Fun.constTrue))(null)); // false implies true = true
-    assertTrue(pipe(Fun.constFalse, Predicate.implies(Fun.constFalse))(null)); // false implies false = true
+    expect(
+      pipe(Fun.constTrue, Predicate.implies(Fun.constTrue))(null),
+    ).toBeTruthy(); // true implies true = true
+    expect(
+      pipe(Fun.constTrue, Predicate.implies(Fun.constFalse))(null),
+    ).toBeFalsy(); // true implies false = false
+    expect(
+      pipe(Fun.constFalse, Predicate.implies(Fun.constTrue))(null),
+    ).toBeTruthy(); // false implies true = true
+    expect(
+      pipe(Fun.constFalse, Predicate.implies(Fun.constFalse))(null),
+    ).toBeTruthy(); // false implies false = true
   });
 
   it("nor", () => {
-    assertFalse(pipe(Fun.constTrue, Predicate.nor(Fun.constTrue))(null)); // true nor true = false
-    assertFalse(pipe(Fun.constTrue, Predicate.nor(Fun.constFalse))(null)); // true nor false = false
-    assertFalse(pipe(Fun.constFalse, Predicate.nor(Fun.constTrue))(null)); // false nor true = false
-    assertTrue(pipe(Fun.constFalse, Predicate.nor(Fun.constFalse))(null)); // false nor false = true
+    expect(pipe(Fun.constTrue, Predicate.nor(Fun.constTrue))(null)).toBeFalsy(); // true nor true = false
+    expect(
+      pipe(Fun.constTrue, Predicate.nor(Fun.constFalse))(null),
+    ).toBeFalsy(); // true nor false = false
+    expect(
+      pipe(Fun.constFalse, Predicate.nor(Fun.constTrue))(null),
+    ).toBeFalsy(); // false nor true = false
+    expect(
+      pipe(Fun.constFalse, Predicate.nor(Fun.constFalse))(null),
+    ).toBeTruthy(); // false nor false = true
   });
 
   it("nand", () => {
-    assertFalse(pipe(Fun.constTrue, Predicate.nand(Fun.constTrue))(null)); // true nand true = false
-    assertTrue(pipe(Fun.constTrue, Predicate.nand(Fun.constFalse))(null)); // true nand false = true
-    assertTrue(pipe(Fun.constFalse, Predicate.nand(Fun.constTrue))(null)); // false nand true = true
-    assertTrue(pipe(Fun.constFalse, Predicate.nand(Fun.constFalse))(null)); // false nand false = true
+    expect(
+      pipe(Fun.constTrue, Predicate.nand(Fun.constTrue))(null),
+    ).toBeFalsy(); // true nand true = false
+    expect(
+      pipe(Fun.constTrue, Predicate.nand(Fun.constFalse))(null),
+    ).toBeTruthy(); // true nand false = true
+    expect(
+      pipe(Fun.constFalse, Predicate.nand(Fun.constTrue))(null),
+    ).toBeTruthy(); // false nand true = true
+    expect(
+      pipe(Fun.constFalse, Predicate.nand(Fun.constFalse))(null),
+    ).toBeTruthy(); // false nand false = true
   });
 
   it("some", () => {
     const predicate = Predicate.some([isPositive, isNegative]);
-    assertFalse(predicate(0));
-    assertTrue(predicate(-1));
-    assertTrue(predicate(1));
+    expect(predicate(0)).toBeFalsy();
+    expect(predicate(-1)).toBeTruthy();
+    expect(predicate(1)).toBeTruthy();
   });
 
   it("every", () => {
     const predicate = Predicate.every([isPositive, isLessThan2]);
-    assertFalse(predicate(0));
-    assertFalse(predicate(-2));
-    assertTrue(predicate(1));
+    expect(predicate(0)).toBeFalsy();
+    expect(predicate(-2)).toBeFalsy();
+    expect(predicate(1)).toBeTruthy();
   });
 
   it("isTruthy", () => {
-    assertTrue(Predicate.isTruthy(true));
-    assertFalse(Predicate.isTruthy(false));
-    assertTrue(Predicate.isTruthy("a"));
-    assertFalse(Predicate.isTruthy(""));
-    assertTrue(Predicate.isTruthy(1));
-    assertFalse(Predicate.isTruthy(0));
-    assertTrue(Predicate.isTruthy(1n));
-    assertFalse(Predicate.isTruthy(0n));
+    expect(Predicate.isTruthy(true)).toBeTruthy();
+    expect(Predicate.isTruthy(false)).toBeFalsy();
+    expect(Predicate.isTruthy("a")).toBeTruthy();
+    expect(Predicate.isTruthy("")).toBeFalsy();
+    expect(Predicate.isTruthy(1)).toBeTruthy();
+    expect(Predicate.isTruthy(0)).toBeFalsy();
+    expect(Predicate.isTruthy(1n)).toBeTruthy();
+    expect(Predicate.isTruthy(0n)).toBeFalsy();
   });
 
   it("isFunction", () => {
-    assertTrue(Predicate.isFunction(Predicate.isFunction));
-    assertFalse(Predicate.isFunction("function"));
+    expect(Predicate.isFunction(Predicate.isFunction)).toBeTruthy();
+    expect(Predicate.isFunction("function")).toBeFalsy();
   });
 
   it("isUndefined", () => {
-    assertTrue(Predicate.isUndefined(undefined));
-    assertFalse(Predicate.isUndefined(null));
-    assertFalse(Predicate.isUndefined("undefined"));
+    expect(Predicate.isUndefined(undefined)).toBeTruthy();
+    expect(Predicate.isUndefined(null)).toBeFalsy();
+    expect(Predicate.isUndefined("undefined")).toBeFalsy();
   });
 
   it("isNotUndefined", () => {
-    assertFalse(Predicate.isNotUndefined(undefined));
-    assertTrue(Predicate.isNotUndefined(null));
-    assertTrue(Predicate.isNotUndefined("undefined"));
+    expect(Predicate.isNotUndefined(undefined)).toBeFalsy();
+    expect(Predicate.isNotUndefined(null)).toBeTruthy();
+    expect(Predicate.isNotUndefined("undefined")).toBeTruthy();
   });
 
   it("isNull", () => {
-    assertTrue(Predicate.isNull(null));
-    assertFalse(Predicate.isNull(undefined));
-    assertFalse(Predicate.isNull("null"));
+    expect(Predicate.isNull(null)).toBeTruthy();
+    expect(Predicate.isNull(undefined)).toBeFalsy();
+    expect(Predicate.isNull("null")).toBeFalsy();
   });
 
   it("isNotNull", () => {
-    assertFalse(Predicate.isNotNull(null));
-    assertTrue(Predicate.isNotNull(undefined));
-    assertTrue(Predicate.isNotNull("null"));
+    expect(Predicate.isNotNull(null)).toBeFalsy();
+    expect(Predicate.isNotNull(undefined)).toBeTruthy();
+    expect(Predicate.isNotNull("null")).toBeTruthy();
   });
 
   it("isNever", () => {
-    assertFalse(Predicate.isNever(null));
-    assertFalse(Predicate.isNever(undefined));
-    assertFalse(Predicate.isNever({}));
-    assertFalse(Predicate.isNever([]));
+    expect(Predicate.isNever(null)).toBeFalsy();
+    expect(Predicate.isNever(undefined)).toBeFalsy();
+    expect(Predicate.isNever({})).toBeFalsy();
+    expect(Predicate.isNever([])).toBeFalsy();
   });
 
   it("isUnknown", () => {
-    assertTrue(Predicate.isUnknown(null));
-    assertTrue(Predicate.isUnknown(undefined));
-    assertTrue(Predicate.isUnknown({}));
-    assertTrue(Predicate.isUnknown([]));
+    expect(Predicate.isUnknown(null)).toBeTruthy();
+    expect(Predicate.isUnknown(undefined)).toBeTruthy();
+    expect(Predicate.isUnknown({})).toBeTruthy();
+    expect(Predicate.isUnknown([])).toBeTruthy();
   });
 
   it("isObject", () => {
-    assertTrue(Predicate.isObject({}));
-    assertTrue(Predicate.isObject([]));
-    assertTrue(Predicate.isObject(() => 1));
-    assertFalse(Predicate.isObject(null));
-    assertFalse(Predicate.isObject(undefined));
-    assertFalse(Predicate.isObject("a"));
-    assertFalse(Predicate.isObject(1));
-    assertFalse(Predicate.isObject(true));
-    assertFalse(Predicate.isObject(1n));
-    assertFalse(Predicate.isObject(Symbol.for("a")));
+    expect(Predicate.isObject({})).toBeTruthy();
+    expect(Predicate.isObject([])).toBeTruthy();
+    expect(Predicate.isObject(() => 1)).toBeTruthy();
+    expect(Predicate.isObject(null)).toBeFalsy();
+    expect(Predicate.isObject(undefined)).toBeFalsy();
+    expect(Predicate.isObject("a")).toBeFalsy();
+    expect(Predicate.isObject(1)).toBeFalsy();
+    expect(Predicate.isObject(true)).toBeFalsy();
+    expect(Predicate.isObject(1n)).toBeFalsy();
+    expect(Predicate.isObject(Symbol.for("a"))).toBeFalsy();
   });
 
   it("isSet", () => {
-    assertTrue(Predicate.isSet(new Set([1, 2])));
-    assertTrue(Predicate.isSet(new Set()));
-    assertFalse(Predicate.isSet({}));
-    assertFalse(Predicate.isSet(null));
-    assertFalse(Predicate.isSet(undefined));
+    expect(Predicate.isSet(new Set([1, 2]))).toBeTruthy();
+    expect(Predicate.isSet(new Set())).toBeTruthy();
+    expect(Predicate.isSet({})).toBeFalsy();
+    expect(Predicate.isSet(null)).toBeFalsy();
+    expect(Predicate.isSet(undefined)).toBeFalsy();
   });
 
   it("isMap", () => {
-    assertTrue(Predicate.isMap(new Map()));
-    assertFalse(Predicate.isMap({}));
-    assertFalse(Predicate.isMap(null));
-    assertFalse(Predicate.isMap(undefined));
+    expect(Predicate.isMap(new Map())).toBeTruthy();
+    expect(Predicate.isMap({})).toBeFalsy();
+    expect(Predicate.isMap(null)).toBeFalsy();
+    expect(Predicate.isMap(undefined)).toBeFalsy();
   });
 
   it("hasProperty", () => {
     const a = Symbol.for("effect/test/a");
 
-    assertTrue(Predicate.hasProperty({ a: 1 }, "a"));
-    assertTrue(Predicate.hasProperty("a")({ a: 1 }));
-    assertTrue(Predicate.hasProperty({ [a]: 1 }, a));
-    assertTrue(Predicate.hasProperty(a)({ [a]: 1 }));
+    expect(Predicate.hasProperty({ a: 1 }, "a")).toBeTruthy();
+    expect(Predicate.hasProperty("a")({ a: 1 })).toBeTruthy();
+    expect(Predicate.hasProperty({ [a]: 1 }, a)).toBeTruthy();
+    expect(Predicate.hasProperty(a)({ [a]: 1 })).toBeTruthy();
 
-    assertFalse(Predicate.hasProperty({}, "a"));
-    assertFalse(Predicate.hasProperty(null, "a"));
-    assertFalse(Predicate.hasProperty(undefined, "a"));
-    assertFalse(Predicate.hasProperty({}, "a"));
-    assertFalse(Predicate.hasProperty(() => {}, "a"));
+    expect(Predicate.hasProperty({}, "a")).toBeFalsy();
+    expect(Predicate.hasProperty(null, "a")).toBeFalsy();
+    expect(Predicate.hasProperty(undefined, "a")).toBeFalsy();
+    expect(Predicate.hasProperty({}, "a")).toBeFalsy();
+    expect(Predicate.hasProperty(() => {}, "a")).toBeFalsy();
 
-    assertFalse(Predicate.hasProperty({}, a));
-    assertFalse(Predicate.hasProperty(null, a));
-    assertFalse(Predicate.hasProperty(undefined, a));
-    assertFalse(Predicate.hasProperty({}, a));
-    assertFalse(Predicate.hasProperty(() => {}, a));
+    expect(Predicate.hasProperty({}, a)).toBeFalsy();
+    expect(Predicate.hasProperty(null, a)).toBeFalsy();
+    expect(Predicate.hasProperty(undefined, a)).toBeFalsy();
+    expect(Predicate.hasProperty({}, a)).toBeFalsy();
+    expect(Predicate.hasProperty(() => {}, a)).toBeFalsy();
   });
 
   it("isTagged", () => {
-    assertFalse(Predicate.isTagged(1, "a"));
-    assertFalse(Predicate.isTagged("", "a"));
-    assertFalse(Predicate.isTagged({}, "a"));
-    assertFalse(Predicate.isTagged("a")({}));
-    assertFalse(Predicate.isTagged({ a: "a" }, "a"));
-    assertTrue(Predicate.isTagged({ _tag: "a" }, "a"));
-    assertTrue(Predicate.isTagged("a")({ _tag: "a" }));
+    expect(Predicate.isTagged(1, "a")).toBeFalsy();
+    expect(Predicate.isTagged("", "a")).toBeFalsy();
+    expect(Predicate.isTagged({}, "a")).toBeFalsy();
+    expect(Predicate.isTagged("a")({})).toBeFalsy();
+    expect(Predicate.isTagged({ a: "a" }, "a")).toBeFalsy();
+    expect(Predicate.isTagged({ _tag: "a" }, "a")).toBeTruthy();
+    expect(Predicate.isTagged("a")({ _tag: "a" })).toBeTruthy();
   });
 
   it("isNullable", () => {
-    assertTrue(Predicate.isNullable(null));
-    assertTrue(Predicate.isNullable(undefined));
-    assertFalse(Predicate.isNullable({}));
-    assertFalse(Predicate.isNullable([]));
+    expect(Predicate.isNullable(null)).toBeTruthy();
+    expect(Predicate.isNullable(undefined)).toBeTruthy();
+    expect(Predicate.isNullable({})).toBeFalsy();
+    expect(Predicate.isNullable([])).toBeFalsy();
   });
 
   it("isNotNullable", () => {
-    assertTrue(Predicate.isNotNullable({}));
-    assertTrue(Predicate.isNotNullable([]));
-    assertFalse(Predicate.isNotNullable(null));
-    assertFalse(Predicate.isNotNullable(undefined));
+    expect(Predicate.isNotNullable({})).toBeTruthy();
+    expect(Predicate.isNotNullable([])).toBeTruthy();
+    expect(Predicate.isNotNullable(null)).toBeFalsy();
+    expect(Predicate.isNotNullable(undefined)).toBeFalsy();
   });
 
   it("isError", () => {
-    assertTrue(Predicate.isError(new Error()));
-    assertFalse(Predicate.isError(null));
-    assertFalse(Predicate.isError({}));
+    expect(Predicate.isError(new Error())).toBeTruthy();
+    expect(Predicate.isError(null)).toBeFalsy();
+    expect(Predicate.isError({})).toBeFalsy();
   });
 
   it("isUint8Array", () => {
-    assertTrue(Predicate.isUint8Array(new Uint8Array()));
-    assertFalse(Predicate.isUint8Array(null));
-    assertFalse(Predicate.isUint8Array({}));
+    expect(Predicate.isUint8Array(new Uint8Array())).toBeTruthy();
+    expect(Predicate.isUint8Array(null)).toBeFalsy();
+    expect(Predicate.isUint8Array({})).toBeFalsy();
   });
 
   it("isDate", () => {
-    assertTrue(Predicate.isDate(new Date()));
-    assertFalse(Predicate.isDate(null));
-    assertFalse(Predicate.isDate({}));
+    expect(Predicate.isDate(new Date())).toBeTruthy();
+    expect(Predicate.isDate(null)).toBeFalsy();
+    expect(Predicate.isDate({})).toBeFalsy();
   });
 
   it("isIterable", () => {
-    assertTrue(Predicate.isIterable([]));
-    assertTrue(Predicate.isIterable(new Set()));
-    assertFalse(Predicate.isIterable(null));
-    assertFalse(Predicate.isIterable({}));
+    expect(Predicate.isIterable([])).toBeTruthy();
+    expect(Predicate.isIterable(new Set())).toBeTruthy();
+    expect(Predicate.isIterable(null)).toBeFalsy();
+    expect(Predicate.isIterable({})).toBeFalsy();
   });
 
   it("isRecord", () => {
-    assertTrue(Predicate.isRecord({}));
-    assertTrue(Predicate.isRecord({ a: 1 }));
+    expect(Predicate.isRecord({})).toBeTruthy();
+    expect(Predicate.isRecord({ a: 1 })).toBeTruthy();
 
-    assertFalse(Predicate.isRecord([]));
-    assertFalse(Predicate.isRecord([1, 2, 3]));
-    assertFalse(Predicate.isRecord(null));
-    assertFalse(Predicate.isRecord(undefined));
-    assertFalse(Predicate.isRecord(() => null));
+    expect(Predicate.isRecord([])).toBeFalsy();
+    expect(Predicate.isRecord([1, 2, 3])).toBeFalsy();
+    expect(Predicate.isRecord(null)).toBeFalsy();
+    expect(Predicate.isRecord(undefined)).toBeFalsy();
+    expect(Predicate.isRecord(() => null)).toBeFalsy();
   });
 
   it("isReadonlyRecord", () => {
-    assertTrue(Predicate.isReadonlyRecord({}));
-    assertTrue(Predicate.isReadonlyRecord({ a: 1 }));
+    expect(Predicate.isReadonlyRecord({})).toBeTruthy();
+    expect(Predicate.isReadonlyRecord({ a: 1 })).toBeTruthy();
 
-    assertFalse(Predicate.isReadonlyRecord([]));
-    assertFalse(Predicate.isReadonlyRecord([1, 2, 3]));
-    assertFalse(Predicate.isReadonlyRecord(null));
-    assertFalse(Predicate.isReadonlyRecord(undefined));
+    expect(Predicate.isReadonlyRecord([])).toBeFalsy();
+    expect(Predicate.isReadonlyRecord([1, 2, 3])).toBeFalsy();
+    expect(Predicate.isReadonlyRecord(null)).toBeFalsy();
+    expect(Predicate.isReadonlyRecord(undefined)).toBeFalsy();
   });
 
   it("isTupleOf", () => {
-    assertTrue(Predicate.isTupleOf([1, 2, 3], 3));
-    assertFalse(Predicate.isTupleOf([1, 2, 3], 4));
-    assertFalse(Predicate.isTupleOf([1, 2, 3], 2));
+    expect(Predicate.isTupleOf([1, 2, 3], 3)).toBeTruthy();
+    expect(Predicate.isTupleOf([1, 2, 3], 4)).toBeFalsy();
+    expect(Predicate.isTupleOf([1, 2, 3], 2)).toBeFalsy();
   });
 
   it("isTupleOfAtLeast", () => {
-    assertTrue(Predicate.isTupleOfAtLeast([1, 2, 3], 3));
-    assertTrue(Predicate.isTupleOfAtLeast([1, 2, 3], 2));
-    assertFalse(Predicate.isTupleOfAtLeast([1, 2, 3], 4));
+    expect(Predicate.isTupleOfAtLeast([1, 2, 3], 3)).toBeTruthy();
+    expect(Predicate.isTupleOfAtLeast([1, 2, 3], 2)).toBeTruthy();
+    expect(Predicate.isTupleOfAtLeast([1, 2, 3], 4)).toBeFalsy();
   });
 
   it("isRegExp", () => {
-    assertTrue(Predicate.isRegExp(/a/));
-    assertFalse(Predicate.isRegExp(null));
-    assertFalse(Predicate.isRegExp("a"));
+    expect(Predicate.isRegExp(/a/)).toBeTruthy();
+    expect(Predicate.isRegExp(null)).toBeFalsy();
+    expect(Predicate.isRegExp("a")).toBeFalsy();
   });
 });

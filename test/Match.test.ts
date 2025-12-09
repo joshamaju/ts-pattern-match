@@ -26,7 +26,7 @@ describe("Match", () => {
       M.exhaustive,
     );
 
-    strictEqual(match, "number: 123");
+    expect(match).toStrictEqual("number: 123");
   });
 
   it("exhaustive", () => {
@@ -36,8 +36,9 @@ describe("Match", () => {
       M.when({ b: M.number }, (_) => _.b),
       M.exhaustive,
     );
-    strictEqual(match({ a: 0 }), 0);
-    strictEqual(match({ b: 1 }), 1);
+
+    expect(match({ a: 0 })).toStrictEqual(0);
+    expect(match({ b: 1 })).toStrictEqual(1);
   });
 
   it("exhaustive-literal", () => {
@@ -47,8 +48,15 @@ describe("Match", () => {
       M.when({ _tag: "B" }, (_) => Either.right(_.b)),
       M.exhaustive,
     );
-    assertRight(match({ _tag: "A", a: 0 }), 0);
-    assertRight(match({ _tag: "B", b: 1 }), 1);
+
+    expect(match({ _tag: "A", a: 0 })).toMatchObject({
+      _tag: "Right",
+      right: 0,
+    });
+    expect(match({ _tag: "B", b: 1 })).toMatchObject({
+      _tag: "Right",
+      right: 1,
+    });
   });
 
   it("schema exhaustive-literal", () => {
@@ -65,9 +73,19 @@ describe("Match", () => {
         throw "absurd";
       }),
     );
-    assertRight(match({ _tag: "A", a: 0 }), "A");
-    assertRight(match({ _tag: "A", a: "hi" }), "A");
-    assertLeft(match({ _tag: "B", b: 1 }), "B");
+
+    expect(match({ _tag: "A", a: 0 })).toMatchObject({
+      _tag: "Right",
+      right: "A",
+    });
+    expect(match({ _tag: "A", a: "hi" })).toMatchObject({
+      _tag: "Right",
+      right: "A",
+    });
+    expect(match({ _tag: "B", b: 1 })).toMatchObject({
+      _tag: "Left",
+      left: "B",
+    });
   });
 
   it("exhaustive literal with not", () => {
@@ -77,8 +95,9 @@ describe("Match", () => {
       M.not(1, (_) => false),
       M.exhaustive,
     );
-    assertTrue(match(1));
-    assertFalse(match(2));
+
+    expect(match(1)).toBeTruthy();
+    expect(match(2)).toBeFalsy();
   });
 
   it("inline", () => {
@@ -88,7 +107,8 @@ describe("Match", () => {
       M.tag("Left", (_) => _.left),
       M.exhaustive,
     );
-    strictEqual(result, 0);
+
+    expect(result).toStrictEqual(0);
   });
 
   it("piped", () => {
@@ -98,7 +118,8 @@ describe("Match", () => {
       M.when({ _tag: "Right" }, (_) => _.right),
       M.option,
     );
-    assertSome(result, 0);
+
+    expect(result).toMatchObject({ _tag: "Some", value: 0 });
   });
 
   it("tuples", () => {
@@ -110,9 +131,9 @@ describe("Match", () => {
       M.option,
     );
 
-    assertNone(match({ length: 2 } as any));
-    assertNone(match(["a", "b"]));
-    assertSome(match(["yeah", "a"]), true);
+    expect(match({ length: 2 } as any)).toMatchObject({ _tag: "None" });
+    expect(match(["a", "b"])).toMatchObject({ _tag: "None" });
+    expect(match(["yeah", "a"])).toMatchObject({ _tag: "Some", value: true });
   });
 
   it("literals", () => {
@@ -122,8 +143,8 @@ describe("Match", () => {
       M.orElse(() => "nah"),
     );
 
-    strictEqual(match("yeah"), true);
-    strictEqual(match("a"), "nah");
+    expect(match("yeah")).toStrictEqual(true);
+    expect(match("a")).toStrictEqual("nah");
   });
 
   it("piped", () => {
@@ -133,7 +154,8 @@ describe("Match", () => {
       M.when({ _tag: "Right" }, (_) => _.right),
       M.option,
     );
-    assertSome(result, 0);
+
+    expect(result).toMatchObject({ _tag: "Some", value: 0 });
   });
 
   it("not schema", () => {
@@ -143,8 +165,9 @@ describe("Match", () => {
       M.when(M.number, (_) => "b"),
       M.exhaustive,
     );
-    strictEqual(match("hi"), "a");
-    strictEqual(match(123), "b");
+
+    expect(match("hi")).toStrictEqual("a");
+    expect(match(123)).toStrictEqual("b");
   });
 
   it("not literal", () => {
@@ -155,8 +178,9 @@ describe("Match", () => {
       }),
       M.orElse((_) => "b"),
     );
-    strictEqual(match("hello"), "a");
-    strictEqual(match("hi"), "b");
+
+    expect(match("hello")).toStrictEqual("a");
+    expect(match("hi")).toStrictEqual("b");
   });
 
   it("literals", () => {
@@ -168,8 +192,8 @@ describe("Match", () => {
       M.orElse(() => "nah"),
     );
 
-    strictEqual(match("yeah"), true);
-    strictEqual(match("a"), "nah");
+    expect(match("yeah")).toStrictEqual(true);
+    expect(match("a")).toStrictEqual("nah");
   });
 
   it("literals duplicate", () => {
@@ -180,7 +204,7 @@ describe("Match", () => {
       M.orElse((_) => "nah"),
     );
 
-    strictEqual(result, true);
+    expect(result).toStrictEqual(true);
   });
 
   it("discriminator", () => {
@@ -190,7 +214,8 @@ describe("Match", () => {
       M.discriminator("type")("B", (_) => _.type),
       M.exhaustive,
     );
-    strictEqual(match({ type: "B" }), "B");
+
+    expect(match({ type: "B" })).toStrictEqual("B");
   });
 
   it("discriminator with nullables", () => {
@@ -198,7 +223,8 @@ describe("Match", () => {
       M.tags({ A: (x) => x._tag }),
       M.orElse(() => null),
     );
-    doesNotThrow(() => match(undefined));
+
+    expect(() => match(undefined)).not.throw();
   });
 
   it("discriminator multiple", () => {
@@ -207,7 +233,8 @@ describe("Match", () => {
       M.discriminator("_tag")("Right", "Left", (_) => "match"),
       M.exhaustive,
     );
-    strictEqual(result, "match");
+
+    expect(result).toStrictEqual("match");
   });
 
   it("nested", () => {
@@ -235,11 +262,15 @@ describe("Match", () => {
       M.exhaustive,
     );
 
-    strictEqual(match({ foo: { bar: { baz: { qux: 1 } } } }), 1);
-    strictEqual(match({ foo: { bar: { baz: { qux: 2 } } } }), "literal 2");
-    strictEqual(match({ foo: { bar: { baz: { qux: "a" } } } }), "a");
-    strictEqual(match({ foo: { bar: { baz: { qux: "b" } } } }), "literal b");
-    strictEqual(match({ foo: { bar: null } }), null);
+    expect(match({ foo: { bar: { baz: { qux: 1 } } } })).toStrictEqual(1);
+    expect(match({ foo: { bar: { baz: { qux: 2 } } } })).toStrictEqual(
+      "literal 2",
+    );
+    expect(match({ foo: { bar: { baz: { qux: "a" } } } })).toStrictEqual("a");
+    expect(match({ foo: { bar: { baz: { qux: "b" } } } })).toStrictEqual(
+      "literal b",
+    );
+    expect(match({ foo: { bar: null } })).toStrictEqual(null);
   });
 
   it("nested Option", () => {
@@ -249,8 +280,8 @@ describe("Match", () => {
       M.orElse((_) => "fail"),
     );
 
-    strictEqual(match({ user: Option.some({ name: "a" }) }), "a");
-    strictEqual(match({ user: Option.none() }), "fail");
+    expect(match({ user: Option.some({ name: "a" }) })).toStrictEqual("a");
+    expect(match({ user: Option.none })).toStrictEqual("fail");
   });
 
   it("predicate", () => {
@@ -260,8 +291,8 @@ describe("Match", () => {
       M.orElse((_) => `${_.age} is too young`),
     );
 
-    strictEqual(match({ age: 5 }), "Age: 5");
-    strictEqual(match({ age: 4 }), "4 is too young");
+    expect(match({ age: 5 })).toStrictEqual("Age: 5");
+    expect(match({ age: 4 })).toStrictEqual("4 is too young");
   });
 
   it("predicate not", () => {
@@ -271,15 +302,16 @@ describe("Match", () => {
       M.orElse((_) => `${_.age} is too old`),
     );
 
-    strictEqual(match({ age: 4 }), "Age: 4");
-    strictEqual(match({ age: 5 }), "5 is too old");
+    expect(match({ age: 4 })).toStrictEqual("Age: 4");
+    expect(match({ age: 5 })).toStrictEqual("5 is too old");
 
     const result = pipe(
       M.value({ age: 4 }),
       M.not({ age: (a) => a >= 5 }, (_) => `Age: ${_.age}`),
       M.orElse((_) => `${_.age} is too old`),
     );
-    strictEqual(result, "Age: 4");
+
+    expect(result).toStrictEqual("Age: 4");
   });
 
   it("predicate with functions", () => {
@@ -296,8 +328,8 @@ describe("Match", () => {
       M.orElse(() => "fail"),
     );
 
-    strictEqual(match({ b: { c: "nested" }, a: 200 }), "nested");
-    strictEqual(match({ b: { c: "nested" }, a: 400 }), "400");
+    expect(match({ b: { c: "nested" }, a: 200 })).toStrictEqual("nested");
+    expect(match({ b: { c: "nested" }, a: 400 })).toStrictEqual("400");
   });
 
   it("predicate at root level", () => {
@@ -317,8 +349,8 @@ describe("Match", () => {
       M.orElse(() => "fail"),
     );
 
-    strictEqual(match({ b: { c: "nested" }, a: 200 }), "nested");
-    strictEqual(match({ b: { c: "nested" }, a: 400 }), "400");
+    expect(match({ b: { c: "nested" }, a: 200 })).toStrictEqual("nested");
+    expect(match({ b: { c: "nested" }, a: 400 })).toStrictEqual("400");
   });
 
   it("symbols", () => {
@@ -333,7 +365,7 @@ describe("Match", () => {
       M.exhaustive,
     );
 
-    strictEqual(match, "thing");
+    expect(match).toStrictEqual("thing");
   });
 
   it("unify", () => {
@@ -344,7 +376,7 @@ describe("Match", () => {
       M.exhaustive,
     );
 
-    assertRight(match({ _tag: "B" }), 123);
+    expect(match({ _tag: "B" })).toEqual({ _tag: "Right", right: 123 });
   });
 
   it("optional props", () => {
@@ -354,9 +386,9 @@ describe("Match", () => {
       M.orElse(() => "no user"),
     );
 
-    strictEqual(match({}), "no user");
-    strictEqual(match({ user: undefined }), undefined);
-    strictEqual(match({ user: { name: "Tim" } }), "Tim");
+    expect(match({})).toStrictEqual("no user");
+    expect(match({ user: undefined })).toStrictEqual(undefined);
+    expect(match({ user: { name: "Tim" } })).toStrictEqual("Tim");
   });
 
   it("optional props defined", () => {
@@ -368,10 +400,10 @@ describe("Match", () => {
       M.orElse(() => "no user"),
     );
 
-    strictEqual(match({}), "no user");
-    strictEqual(match({ user: undefined }), "no user");
-    strictEqual(match({ user: null }), "no user");
-    strictEqual(match({ user: { name: "Tim" } }), "Tim");
+    expect(match({})).toStrictEqual("no user");
+    expect(match({ user: undefined })).toStrictEqual("no user");
+    expect(match({ user: null })).toStrictEqual("no user");
+    expect(match({ user: { name: "Tim" } })).toStrictEqual("Tim");
   });
 
   it("deep recursive", () => {
@@ -403,10 +435,10 @@ describe("Match", () => {
       M.exhaustive,
     );
 
-    strictEqual(match(null), "null");
-    strictEqual(match(123), "number");
-    strictEqual(match("hi"), "string");
-    strictEqual(match({}), "record");
+    expect(match(null)).toStrictEqual("null");
+    expect(match(123)).toStrictEqual("number");
+    expect(match("hi")).toStrictEqual("string");
+    expect(match({})).toStrictEqual("record");
   });
 
   it("nested option", () => {
@@ -421,9 +453,11 @@ describe("Match", () => {
       M.orElse((_) => "no match"),
     );
 
-    strictEqual(match({ abc: Option.some({ _tag: "A" }) }), "A");
-    strictEqual(match({ abc: Option.some({ _tag: "B" }) }), "no match");
-    strictEqual(match({ abc: Option.none }), "no match");
+    expect(match({ abc: Option.some({ _tag: "A" }) })).toStrictEqual("A");
+    expect(match({ abc: Option.some({ _tag: "B" }) })).toStrictEqual(
+      "no match",
+    );
+    expect(match({ abc: Option.none })).toStrictEqual("no match");
   });
 
   it("getters", () => {
@@ -439,7 +473,7 @@ describe("Match", () => {
       M.orElse(() => "fail"),
     );
 
-    strictEqual(match, "thing");
+    expect(match).toStrictEqual("thing");
   });
 
   it("whenOr", () => {
@@ -451,9 +485,10 @@ describe("Match", () => {
       M.when({ _tag: "C" }, (_) => "C"),
       M.exhaustive,
     );
-    strictEqual(match({ _tag: "A", a: 0 }), "A or B");
-    strictEqual(match({ _tag: "B", b: 1 }), "A or B");
-    strictEqual(match({ _tag: "C" }), "C");
+
+    expect(match({ _tag: "A", a: 0 })).toStrictEqual("A or B");
+    expect(match({ _tag: "B", b: 1 })).toStrictEqual("A or B");
+    expect(match({ _tag: "C" })).toStrictEqual("C");
   });
 
   it("optional array", () => {
@@ -463,9 +498,9 @@ describe("Match", () => {
       M.orElse(() => "no match"),
     );
 
-    strictEqual(match({ a: [{ name: "Tim" }] }), "match 1");
-    strictEqual(match({ a: [] }), "no match");
-    strictEqual(match({}), "no match");
+    expect(match({ a: [{ name: "Tim" }] })).toStrictEqual("match 1");
+    expect(match({ a: [] })).toStrictEqual("no match");
+    expect(match({})).toStrictEqual("no match");
   });
 
   it("whenAnd", () => {
@@ -478,9 +513,10 @@ describe("Match", () => {
       M.when({ _tag: "C" }, (_) => "C"),
       M.exhaustive,
     );
-    strictEqual(match({ _tag: "A", a: 0 }), "A");
-    strictEqual(match({ _tag: "B", b: 1 }), "B");
-    strictEqual(match({ _tag: "C" }), "C");
+
+    expect(match({ _tag: "A", a: 0 })).toStrictEqual("A");
+    expect(match({ _tag: "B", b: 1 })).toStrictEqual("B");
+    expect(match({ _tag: "C" })).toStrictEqual("C");
   });
 
   it("whenAnd nested", () => {
@@ -522,39 +558,43 @@ describe("Match", () => {
       M.when({ status: M.number }, (_) => "number"),
       M.exhaustive,
     );
-    strictEqual(
+
+    expect(
       match({
         status: 200,
         user: { name: "Tim", manager: { name: "Joe" } },
         company: { name: "Apple" },
       }),
-      "200, Tim, Joe, Apple",
-    );
-    strictEqual(
+    ).toStrictEqual("200, Tim, Joe, Apple");
+
+    expect(
       match({
         status: 200,
         user: { name: "Tim" },
         company: { name: "Apple" },
       }),
-      "200, Tim, Apple",
-    );
-    strictEqual(
+    ).toStrictEqual("200, Tim, Apple");
+
+    expect(
       match({
         status: 200,
         user: { name: "Tim" },
         company: { name: "Apple" },
       }),
-      "200, Tim, Apple",
-    );
-    strictEqual(
+    ).toStrictEqual("200, Tim, Apple");
+
+    expect(
       match({
         status: 200,
         user: { name: "Tim" },
       }),
-      "200, Tim",
+    ).toStrictEqual("200, Tim");
+
+    expect(match({ status: 100, user: { name: "Tim" } })).toStrictEqual(
+      "number, Tim",
     );
-    strictEqual(match({ status: 100, user: { name: "Tim" } }), "number, Tim");
-    strictEqual(match({ status: 100 }), "number");
+
+    expect(match({ status: 100 })).toStrictEqual("number");
   });
 
   it("instanceOf", () => {
@@ -571,8 +611,8 @@ describe("Match", () => {
       }),
     );
 
-    strictEqual(match(new Uint8Array([1, 2, 3])), "uint8");
-    strictEqual(match(new Uint16Array([1, 2, 3])), "uint16");
+    expect(match(new Uint8Array([1, 2, 3]))).toStrictEqual("uint8");
+    expect(match(new Uint16Array([1, 2, 3]))).toStrictEqual("uint16");
   });
 
   it("tags", () => {
@@ -585,8 +625,8 @@ describe("Match", () => {
       M.exhaustive,
     );
 
-    strictEqual(match({ _tag: "A", a: 1 }), 1);
-    strictEqual(match({ _tag: "B", b: 1 }), "B");
+    expect(match({ _tag: "A", a: 1 })).toStrictEqual(1);
+    expect(match({ _tag: "B", b: 1 })).toStrictEqual("B");
   });
 
   it("tagsExhaustive", () => {
@@ -598,8 +638,8 @@ describe("Match", () => {
       }),
     );
 
-    strictEqual(match({ _tag: "A", a: 1 }), 1);
-    strictEqual(match({ _tag: "B", b: 1 }), "B");
+    expect(match({ _tag: "A", a: 1 })).toStrictEqual(1);
+    expect(match({ _tag: "B", b: 1 })).toStrictEqual("B");
   });
 
   it("valueTags", () => {
@@ -612,28 +652,26 @@ describe("Match", () => {
       }),
     );
 
-    strictEqual(match, 123);
+    expect(match).toStrictEqual(123);
   });
 
   it("typeTags", () => {
     type Value = { _tag: "A"; a: number } | { _tag: "B"; b: number };
     const matcher = M.typeTags<Value>();
 
-    strictEqual(
+    expect(
       matcher({
         A: (_) => _.a,
         B: (_) => "fail",
       })({ _tag: "A", a: 123 }),
-      123,
-    );
+    ).toStrictEqual(123);
 
-    strictEqual(
+    expect(
       matcher({
         A: (_) => _.a,
         B: (_) => "B",
       })({ _tag: "B", b: 123 }),
-      "B",
-    );
+    ).toStrictEqual("B");
   });
 
   it("refinement - with unknown", () => {
@@ -649,8 +687,8 @@ describe("Match", () => {
       M.exhaustive,
     );
 
-    strictEqual(match([]), "array");
-    strictEqual(match("fail"), "string");
+    expect(match([])).toStrictEqual("array");
+    expect(match("fail")).toStrictEqual("string");
   });
 
   it("refinement nested - with unknown", () => {
@@ -663,8 +701,8 @@ describe("Match", () => {
       M.orElse(() => "fail"),
     );
 
-    strictEqual(match({ a: [123] }), "array");
-    strictEqual(match({ a: "fail" }), "fail");
+    expect(match({ a: [123] })).toStrictEqual("array");
+    expect(match({ a: "fail" })).toStrictEqual("fail");
   });
 
   it("unknown - refinement", () => {
@@ -674,8 +712,8 @@ describe("Match", () => {
       M.orElse(() => "unknown"),
     );
 
-    strictEqual(match({}), "record");
-    strictEqual(match([]), "unknown");
+    expect(match({})).toStrictEqual("record");
+    expect(match([])).toStrictEqual("unknown");
   });
 
   it("any - refinement", () => {
@@ -685,8 +723,8 @@ describe("Match", () => {
       M.orElse(() => "unknown"),
     );
 
-    strictEqual(match({}), "record");
-    strictEqual(match([]), "unknown");
+    expect(match({})).toStrictEqual("record");
+    expect(match([])).toStrictEqual("unknown");
   });
 
   it("discriminatorStartsWith", () => {
@@ -696,10 +734,11 @@ describe("Match", () => {
       M.discriminatorStartsWith("type")("B", (_) => 2 as const),
       M.orElse((_) => 3 as const),
     );
-    strictEqual(match({ type: "A" }), 1);
-    strictEqual(match({ type: "A.A" }), 1);
-    strictEqual(match({ type: "B" }), 2);
-    strictEqual(match({}), 3);
+
+    expect(match({ type: "A" })).toStrictEqual(1);
+    expect(match({ type: "A.A" })).toStrictEqual(1);
+    expect(match({ type: "B" })).toStrictEqual(2);
+    expect(match({})).toStrictEqual(3);
   });
 
   it("symbol", () => {
@@ -708,8 +747,9 @@ describe("Match", () => {
       M.when(M.symbol, (_) => "symbol"),
       M.orElse(() => "else"),
     );
-    strictEqual(match(Symbol.for("a")), "symbol");
-    strictEqual(match(123), "else");
+
+    expect(match(Symbol.for("a"))).toStrictEqual("symbol");
+    expect(match(123)).toStrictEqual("else");
   });
 
   it("withReturnType", () => {
@@ -719,8 +759,9 @@ describe("Match", () => {
       M.when("A", (_) => "A"),
       M.orElse(() => "else"),
     );
-    strictEqual(match("A"), "A");
-    strictEqual(match("a"), "else");
+
+    expect(match("A")).toStrictEqual("A");
+    expect(match("a")).toStrictEqual("else");
   });
 
   it("withReturnType after predicate", () => {
@@ -730,8 +771,9 @@ describe("Match", () => {
       M.withReturnType<string>(),
       M.orElse(() => "else"),
     );
-    strictEqual(match("A"), "A");
-    strictEqual(match("a"), "else");
+
+    expect(match("A")).toStrictEqual("A");
+    expect(match("a")).toStrictEqual("else");
   });
 
   it("withReturnType mismatch", () => {
@@ -742,9 +784,9 @@ describe("Match", () => {
       M.when("A", (_) => 123),
       M.orElse(() => "else"),
     );
-    // @ts-expect-error
-    strictEqual(match("A"), 123);
-    strictEqual(match("a"), "else");
+
+    expect(match("A")).toStrictEqual(123);
+    expect(match("a")).toStrictEqual("else");
   });
 
   it("withReturnType constraint mismatch", () => {
@@ -764,8 +806,9 @@ describe("Match", () => {
       M.when("A", (_) => "a"),
       M.orElse((_) => "b"),
     );
-    strictEqual(match("A"), "a");
-    strictEqual(match("a"), "b");
+
+    expect(match("A")).toStrictEqual("a");
+    expect(match("a")).toStrictEqual("b");
   });
 
   it("withReturnType union mismatch", () => {
@@ -784,8 +827,8 @@ describe("Match", () => {
       M.orElse(() => "empty"),
     );
 
-    strictEqual(match("hello"), "ok");
-    strictEqual(match(""), "empty");
+    expect(match("hello")).toStrictEqual("ok");
+    expect(match("")).toStrictEqual("empty");
   });
 
   it("is", () => {
@@ -794,8 +837,8 @@ describe("Match", () => {
       M.orElse(() => "ko"),
     );
 
-    strictEqual(match("A"), "ok");
-    strictEqual(match("C"), "ko");
+    expect(match("A")).toStrictEqual("ok");
+    expect(match("C")).toStrictEqual("ko");
   });
 
   it("orElseAbsurd should throw if a match is not found", () => {
@@ -803,9 +846,12 @@ describe("Match", () => {
       M.when(M.is("A", "B"), () => "ok"),
       M.orElseAbsurd,
     );
-    strictEqual(match("A"), "ok");
-    strictEqual(match("B"), "ok");
-    throws(() => match("C"), new Error("effect/Match/orElseAbsurd: absurd"));
+
+    expect(match("A")).toStrictEqual("ok");
+    expect(match("B")).toStrictEqual("ok");
+    expect(() => match("C")).toThrowError(
+      new Error("effect/Match/orElseAbsurd: absurd"),
+    );
   });
 
   it("option (with M.value) should return None if a match is not found", () => {
@@ -813,7 +859,8 @@ describe("Match", () => {
       M.when(M.is("A", "B"), () => "ok"),
       M.option,
     );
-    assertNone(result);
+
+    expect(result).toEqual({ _tag: "None" });
   });
 
   it("exhaustive should throw on invalid inputs", () => {
@@ -822,14 +869,14 @@ describe("Match", () => {
       M.exhaustive,
     );
 
-    throws(() => match("C" as "A"));
+    expect(() => match("C" as "A")).toThrow();
 
-    throws(() =>
+    expect(() =>
       M.value("C" as "A").pipe(
         M.when(M.is("A"), () => "ok"),
         M.exhaustive,
       ),
-    );
+    ).toThrow();
   });
 
   it("orElse (with M.value) should return the default if a match is not found", () => {
@@ -837,7 +884,8 @@ describe("Match", () => {
       M.when(M.is("A", "B"), () => "ok"),
       M.orElse(() => "default"),
     );
-    strictEqual(result, "default");
+
+    expect(result).toStrictEqual("default");
   });
 
   it("tag + withReturnType doesn't need as const for string literals", () => {
@@ -848,6 +896,7 @@ describe("Match", () => {
       M.tag("B", () => "b"),
       M.exhaustive,
     );
-    strictEqual(result, "a");
+
+    expect(result).toStrictEqual("a");
   });
 });
