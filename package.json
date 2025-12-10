@@ -1,17 +1,48 @@
 {
-  "name": "pattern-match",
+  "name": "ts-pattern-match",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
-  "scripts": {
-    "dev": "tsc --w",
-    "test": "vitest run"
+  "type": "module",
+  "publishConfig": {
+    "access": "public"
   },
-  "keywords": [],
-  "author": "",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --w",
+    "test": "vitest run",
+    "changeset": "changeset",
+    "prepublish": "pnpm build",
+    "version": "changeset version",
+    "release": "changeset publish"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/dts/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./Match": {
+      "types": "./dist/dts/Match.d.ts",
+      "import": "./dist/Match.js"
+    },
+    "./Predicate": {
+      "types": "./dist/dts/Predicate.d.ts",
+      "import": "./dist/Predicate.js"
+    }
+  },
+  "files": [
+    "dist",
+    "package.json"
+  ],
+  "keywords": [
+    "match",
+    "pattern",
+    "typescript"
+  ],
+  "author": "Joshua Amaju <joshsemail4work@gmail.com>",
   "license": "ISC",
   "packageManager": "pnpm@10.14.0",
   "devDependencies": {
+    "@changesets/cli": "^2.29.8",
     "fp-ts": "^2.16.11",
     "typescript": "^5.9.3",
     "vitest": "^4.0.15"
