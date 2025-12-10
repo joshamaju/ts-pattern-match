@@ -1,7 +1,7 @@
 {
   "name": "ts-pattern-match",
   "version": "0.1.0",
-  "description": "",
+  "description": "Pattern Matching for TypeScript.",
   "type": "module",
   "publishConfig": {
     "access": "public"
